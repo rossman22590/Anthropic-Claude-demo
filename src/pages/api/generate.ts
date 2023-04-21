@@ -1,26 +1,36 @@
 import { APIRoute } from 'astro';
-
-const apiKey = import.meta.env.ANTHROPIC_API_KEY;
-const apiUrl = 'https://api.anthropic.com/v1/complete';
+import { completeWithAnthropic, generatePrompt } from '@/utils/anthropic';
+import type { ChatMessage } from '@/types';
 
 export const post: APIRoute = async (context) => {
-  const requestBody = await context.request.json();
+  try {
+    const body = await context.request.json();
+    const messages: ChatMessage[] = body.messages;
+    const prompt = generatePrompt(messages);
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': apiKey,
-    },
-    body: JSON.stringify(requestBody),
-  });
-
-  const responseBody = await response.json();
-
-  return new Response(JSON.stringify(responseBody), {
-    status: response.status,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+    const completion = await completeWithAnthropic(prompt);
+    return {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        completion,
+      }),
+    };
+  } catch (error) {
+    console.error("Anthropic API Error: ", error);
+    return {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: {
+          code: error.name,
+          message: error.message,
+        },
+      }),
+    };
+  }
 };
