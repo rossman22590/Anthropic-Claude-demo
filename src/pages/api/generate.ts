@@ -1,4 +1,3 @@
-
 import { APIRoute } from 'astro';
 
 const apiKey = import.meta.env.ANTHROPIC_API_KEY;
