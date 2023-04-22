@@ -1,6 +1,9 @@
 import { APIRoute } from 'astro';
-import { completeWithAnthropic, generatePrompt } from '@/utils/anthropic';
+import { generatePrompt } from '@/utils/anthropic';
 import type { ChatMessage } from '@/types';
+
+const apiKey = import.meta.env.ANTHROPIC_API_KEY;
+const model = import.meta.env.ANTHROPIC_API_MODEL || 'claude-v1';
 
 export const post: APIRoute = async (context) => {
   try {
@@ -30,5 +33,34 @@ export const post: APIRoute = async (context) => {
         'Content-Type': 'application/json',
       },
     });
+  }
+};
+
+const completeWithAnthropic = async (prompt: string) => {
+  try {
+    const response = await fetch('https://api.anthropic.com/complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        prompt,
+        model,
+        stop_sequences: ['Human'],
+        max_tokens_to_sample: 200,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Anthropic API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.completion;
+  } catch (error) {
+    console.error("Anthropic API Error: ", error);
+    throw error;
   }
 };
