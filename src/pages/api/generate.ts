@@ -1,44 +1,21 @@
 import { APIRoute } from 'astro';
-import { generatePrompt } from '@/utils/anthropic';
 import type { ChatMessage } from '@/types';
 
 const apiKey = import.meta.env.ANTHROPIC_API_KEY;
 const model = import.meta.env.ANTHROPIC_API_MODEL || 'claude-v1';
 
-export const post: APIRoute = async (context) => {
-  try {
-    const body = await context.request.json();
-    const messages: ChatMessage[] = body.messages;
-    const prompt = generatePrompt(messages);
-
-    const completion = await completeWithAnthropic(prompt);
-    return new Response(JSON.stringify({
-      completion,
-    }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  } catch (error) {
-    console.error("Anthropic API Error: ", error);
-    return new Response(JSON.stringify({
-      error: {
-        code: error.name,
-        message: error.message,
-      },
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  }
+export const generatePrompt = (messages: ChatMessage[]): string => {
+  let prompt = "";
+  messages.forEach(message => {
+    prompt += `\n\n${message.role === 'user' ? 'Human' : 'Assistant'}: ${message.content}`;
+  });
+  prompt += `\n\nAssistant:`;
+  return prompt;
 };
 
 const completeWithAnthropic = async (prompt: string) => {
   try {
-    const response = await fetch('https://api.anthropic.com/complete', {
+    const response = await fetch('https://api.anthropic.com/v1/complete', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,5 +39,38 @@ const completeWithAnthropic = async (prompt: string) => {
   } catch (error) {
     console.error("Anthropic API Error: ", error);
     throw error;
+  }
+};
+
+export const post: APIRoute = async (context) => {
+  try {
+    const body = await context.request.json();
+    const messages: ChatMessage[] = body.messages;
+    const prompt = generatePrompt(messages);
+
+    const completion = await completeWithAnthropic(prompt);
+    return {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        completion,
+      }),
+    };
+  } catch (error) {
+    console.error("Anthropic API Error: ", error);
+    return {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: {
+          code: error.name,
+          message: error.message,
+        },
+      }),
+    };
   }
 };
