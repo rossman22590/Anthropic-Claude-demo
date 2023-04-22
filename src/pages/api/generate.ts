@@ -1,8 +1,8 @@
 import { APIRoute } from 'astro';
 import type { ChatMessage } from '@/types';
 
-const apiKey = import.meta.env.ANTHROPIC_API_KEY;
-const model = import.meta.env.ANTHROPIC_API_MODEL || 'claude-v1';
+const apiKey = process.env.ANTHROPIC_API_KEY;
+const model = process.env.ANTHROPIC_API_MODEL || 'claude-v1';
 
 export const generatePrompt = (messages: ChatMessage[]): string => {
   let prompt = "";
