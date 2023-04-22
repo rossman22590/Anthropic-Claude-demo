@@ -1,4 +1,4 @@
-import { APIRoute, Response } from 'astro';
+import { APIRoute } from 'astro';
 import { completeWithAnthropic, generatePrompt } from '@/utils/anthropic';
 import type { ChatMessage } from '@/types';
 
