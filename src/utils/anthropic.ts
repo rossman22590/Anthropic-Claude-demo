@@ -22,7 +22,7 @@ export const completeWithAnthropic = async (prompt: string) => {
       prompt,
       model,
       stop_sequences: [HUMAN_PROMPT],
-      max_tokens_to_sample: 200,
+      max_tokens_to_sample: 1000,
       stream: true,
     });
 
